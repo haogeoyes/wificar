@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<!-- saved from url=(0076)http://www.zhangxinxu.com/study/201110/mobile/jquery-mobile-form-button.html -->
+<html class="ui-mobile"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><!--<base href="http://www.zhangxinxu.com/study/201110/mobile/jquery-mobile-form-button.html">--><base href="."> 
+	<title>交互直播</title> 
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1"> 
+
+	<link rel="stylesheet" href="/static/xiaoche/jquery.mobile.min.css">
+	<script type="text/javascript" src="/static/xiaoche/jquery-1.6.4.min.js"></script>
+	<script type="text/javascript" src="/static/xiaoche/jquery.mobile.min.js"></script>
+	
+	
+	<script type="text/javascript">
+function front(btn)
+{
+var xmlhttp;
+if (window.XMLHttpRequest)
+  {// code for IE7+, Firefox, Chrome, Opera, Safari
+  xmlhttp=new XMLHttpRequest();
+  }
+else
+  {// code for IE6, IE5
+  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+
+xmlhttp.open("GET","/check_data/front/",true);
+xmlhttp.send();
+//setTimeout(function(){xmlhttp.open("GET","/check_data/stop/",true);xmlhttp.send();},200)
+}
+
+
+
+
+
+
+
+function back(btn)
+{
+var xmlhttp;
+if (window.XMLHttpRequest)
+  {// code for IE7+, Firefox, Chrome, Opera, Safari
+  xmlhttp=new XMLHttpRequest();
+  }
+else
+  {// code for IE6, IE5
+  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+
+xmlhttp.open("GET","/check_data/back/",true);
+xmlhttp.send();
+//setTimeout(function(){xmlhttp.open("GET","/check_data/stop/",true);xmlhttp.send();},200)
+}
+
+
+function left(btn)
+{
+var xmlhttp;
+if (window.XMLHttpRequest)
+  {// code for IE7+, Firefox, Chrome, Opera, Safari
+  xmlhttp=new XMLHttpRequest();
+  }
+else
+  {// code for IE6, IE5
+  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+
+
+xmlhttp.open("GET","/check_data/left/",true);
+xmlhttp.send();
+//setTimeout(function(){xmlhttp.open("GET","/check_data/stop/",true);xmlhttp.send();},200)
+}
+
+
+
+function right(btn)
+{
+var xmlhttp;
+if (window.XMLHttpRequest)
+  {// code for IE7+, Firefox, Chrome, Opera, Safari
+  xmlhttp=new XMLHttpRequest();
+  }
+else
+  {// code for IE6, IE5
+  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+xmlhttp.open("GET","/check_data/right/",true);
+xmlhttp.send();
+//setTimeout(function(){xmlhttp.open("GET","/check_data/stop/",true);xmlhttp.send();},200)
+}
+
+
+
+
+
+
+
+function stop(btn) {
+btn.style.background = 'red';
+var xmlhttp;
+if (window.XMLHttpRequest)
+  {// code for IE7+, Firefox, Chrome, Opera, Safari
+  xmlhttp=new XMLHttpRequest();
+  }
+else
+  {// code for IE6, IE5
+  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+xmlhttp.open("GET","/check_data/stop/",true);
+xmlhttp.send()
+}
+
+</script>
+    <script type="text/javascript">
+
+      /* Copyright (C) 2007 Richard Atterer, richard©atterer.net
+       * This program is free software; you can redistribute it and/or modify it
+       * under the terms of the GNU General Public License, version 2. See the file
+       * COPYING for details.
+       */
+
+      var imageNr = 0; // Serial number of current image
+      var finished = new Array(); // References to img objects which have finished downloading
+      var paused = false;
+      var previous_time = new Date();
+      var fNi = 0, msAvg = 0, fpsAvg = 0, fcnt = 0, fN = 80, msa = [], wsize = 4;
+
+	function xiaocheip()
+	{
+	get_id=document.getElementById("test");
+	get_id2=document.getElementById("test2");
+	ip=get_id2.innerHTML;
+	return ip;
+	}
+
+      function createImageLayer() {
+        var img = new Image();
+        img.style.position = "absolute";
+        img.style.zIndex = -1;
+        img.onload = imageOnload;
+        //img.onclick = imageOnclick;
+	//512-384
+        img.width = 300;
+        img.height = 230;
+	ip=xiaocheip()
+        img.src = "http://"+ip+":8/?action=snapshot&n=" + (++imageNr);
+        //img.src = "http://106.37.111.254:8/?action=snapshot&n=" + (++imageNr);
+        var webcam = document.getElementById("webcam");
+                window.info = document.getElementById('info').firstChild;
+                window.ravgFps = document.getElementById('ravgfps').firstChild;
+                window.ravgMs = document.getElementById('ravgms').firstChild;
+                webcam.insertBefore(img, webcam.firstChild);
+                document.getElementById('fN').firstChild.nodeValue = fN;
+      }
+
+
+        function runningAvgs (delta) {
+                // delta is the measured frame period
+                var len;
+                if (fcnt < fN) {
+
+                        fcnt++;
+                        // we need to populate the sample array
+                        msa.push(delta);
+                        // calculate average period so far
+                        msAvg += (delta - msAvg) / fcnt;
+
+                } else {
+                        /*
+                                running average (fN samples) according to the formula:
+                                rAvg = rAvg - value_fN_samples_back / fN + newest_value / fN
+                        */
+                        msAvg += (delta - msa[0])/fN;
+                        // drop oldest ms value, msa[0]
+                        msa = msa.slice(1);
+                        // append newest value, delta
+                        msa.push(delta);
+                }
+                // calculate average fps
+                fpsAvg = 1000 / msAvg;
+                /*
+                        once every fN frames, check if we need to adjust the averaging window
+                        since faster rates seem to need more samples to reach a stable(er) readout
+                */
+                if (++fNi == fN) {
+
+                        fNi = 0;
+                        // new window size
+                        fN = parseInt(fpsAvg * wsize);
+                        len = fcnt - fN;
+                        // if our sample array, msa, has extra samples, then trim it to the new size
+                        if (len > 0) {
+
+                                // adjust averaging window (nr of samples)
+                                msa = msa.splice(len);
+                                // avoid populating the sample array again
+                                fcnt = fN;
+                        }
+                }
+        }
+
+      // Two layers are always present (except at the very beginning), to avoid flicker
+      function imageOnload() {
+        this.style.zIndex = imageNr; // Image finished, bring to front!
+        while (1 < finished.length) {
+          var del = finished.shift(); // Delete old image(s) from document
+          del.parentNode.removeChild(del);
+        }
+        finished.push(this);
+        current_time = new Date();
+        delta = current_time.getTime() - previous_time.getTime();
+        fps   = (1000.0 / delta).toFixed(1);
+                runningAvgs(delta);
+        info.nodeValue = delta + " ms (" + fps + " fps)";
+                ravgFps.nodeValue = fpsAvg.toFixed(1);
+                ravgMs.nodeValue = msAvg.toFixed(0);
+                previous_time = current_time;
+        if (!paused) createImageLayer();
+      }
+
+      function imageOnclick() { // Clicking on the image will pause the stream
+        paused = !paused;
+        if (!paused) createImageLayer();
+      }
+
+    </script>
+
+<script>
+function led_on() {
+var xmlhttp;
+if (window.XMLHttpRequest)
+  {// code for IE7+, Firefox, Chrome, Opera, Safari
+  xmlhttp=new XMLHttpRequest();
+  }
+else
+  {// code for IE6, IE5
+  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+xmlhttp.open("GET","/check_data/ledon",true);
+xmlhttp.send()
+}
+function led_off() {
+var xmlhttp;
+if (window.XMLHttpRequest)
+  {// code for IE7+, Firefox, Chrome, Opera, Safari
+  xmlhttp=new XMLHttpRequest();
+  }
+else
+  {// code for IE6, IE5
+  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+  }
+xmlhttp.open("GET","/check_data/ledoff",true);
+xmlhttp.send()
+}
+
+
+function onclick_light(){
+light_id=document.getElementById('light')
+if (light_id.src.match("off"))
+ {light_id.src="/static/images/on.gif";led_on();}
+else
+ {light_id.src="/static/images/off.gif";led_off();}
+
+
+}
+function test1()
+{
+get_id=document.getElementById("test");
+get_id.innerHTML="test1函数";
+}
+function test2()
+{
+get_id=document.getElementById("test");
+get_id.innerHTML="test2函数";
+}
+$(document).ready(function(){
+　　setInterval('autoScroll("#onclick_num","#pv_num")', 1000);
+    
+
+})
+function autoScroll(obj1,obj2){
+	  $(obj1).load('/static/checkdata_num.log');
+	  $(obj2).load('/static/pv_num.log');
+}
+</script>
+
+</head> 
+<body class="ui-mobile-viewport" onload="createImageLayer();"> 
+
+<div data-role="page" data-url="/study/201110/mobile/jquery-mobile-form-button.html" tabindex="0" class="ui-page ui-body-c ui-page-active" style="min-height: 654px;">
+
+	<div data-role="header" class="ui-header ui-bar-a" role="banner">
+		<h1 class="ui-title" tabindex="0" role="heading" aria-level="1">交互直播</h1>
+	</div><!-- /头部 -->
+    
+    <div data-role="content" class="ui-content" role="main">
+    	<div data-theme="c" class="ui-btn ui-btn-corner-all ui-shadow ui-btn-up-c" aria-disabled="false">
+			<span class="ui-btn-inner ui-btn-corner-all" aria-hidden="true">
+				<span class="ui-btn-text">多人在线控制</span>
+			</span>
+			<button class="ui-btn-hidden"  aria-disabled="false" onclick="front(this)" >前</button>
+			<button class="ui-btn-hidden"  aria-disabled="false" onclick="back(this)" >后</button>
+			<button class="ui-btn-hidden" aria-disabled="false" onclick="left(this)" >左</button>
+			<button class="ui-btn-hidden" aria-disabled="false" onclick="right(this)" >右</button>
+			 <!-- <img src="/static/images/image.jpg" height="80%" width="80%" >-->
+        <div  id="webcam" onclick="" style="width:13px;height:10px;text-align:center;"><noscript><img src="http://{{ip}}:8/?action=snapshot" style="width:80%; height:80%;" /></noscript></div>
+
+
+        <div  id="webcam" style="width:13px;height:10px;text-align:center;"><noscript><img src="http://{{ip}}:8/?action=snapshot" style="width:80%; height:80%;" /></noscript></div>
+        <div>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+
+        <!--最近访问{{hour_pv}}次/时-->
+<!--<img style="padding: 10px;" id="light" align="left"  src="/static/images/off.gif" height="60" width="36"/>-->
+        <p>访问量:<span id="pv_num"></span> 点击次数:<span id="onclick_num"></span></p> 
+        <p>小车直播IP: <span id=test2>{{ip}}</span>码流</p>
+        <p>耗时:<span id="info">-</span><br/>
+        均值<sub id="fN">-</sub> : <span  id="ravgms">-</span> ms (<span  id="ravgfps">-</span> fps)}</p>
+
+		
+
+
+
+
+        
+        
+                </div>
+                </div>
+           </div>
+</div><!-- /页面 -->
+
+
+
+
+<div class="ui-loader ui-body-a ui-corner-all" style="top: 327px;">
+	<span class="ui-icon ui-icon-loading spin"></span><h1>loading</h1>
+</div>
+</body>
+
+</html>
